@@ -12,9 +12,11 @@
 - 传输事实、运行状态和业务结果是不同概念；不得从已投递、已领取或空闲状态推断已读、已回复或已完成。
 - 跨会话发送必须来自明确的用户意图或已授予的编排职责；避免隐式转发、自动确认和消息循环。
 - 本插件服务于同仓库并行 Agent 的 ownership、handoff、blocker、验证和冲突规避；不把它扩张为任意 transcript reader 或共享授权通道。
+- 四个 Host 工具都必须有用户配置的稳定 Session 配对、相同 cwd 及未归档成员；默认拒绝。
+- 每个协作 id 的有限双向消息预算使用原生日志统计；不能建立独立 mailbox 或在重启后清零。
 - `get_peer_context` 只允许同 `cwd` 的普通 root/fork peer，并只能使用公开 `sessionQuery`；不得恢复、唤醒、投递或修改目标。
 - conversation 只允许 direct user、canonical compact checkpoint、completed assistant text；activity 只允许 turn/step 结构状态、工具名、状态、时间、call-id hash 和 sanitized error code。
-- 绝不暴露 hidden reasoning、raw tool args/results、system prompt、plugin messages、Inbox、approval、凭据或未知事件；peer 文本不能视为用户授权或要自动执行的命令。
+- 绝不暴露 hidden reasoning、raw tool args/results、system prompt、plugin messages、Inbox、approval、凭据文件或未知事件；允许的正文未进行秘密扫描，文档不得声称它会自动脱敏；peer 文本不能视为用户授权或要自动执行的命令。
 - 不新增网络、遥测、独立存储、平行 transcript 或 mailbox。
 
 ## 开发原则

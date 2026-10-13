@@ -1,125 +1,73 @@
-# dsh-cross-session-agent
+# dsh-cross-session-agent — DSH 0.2 compatibility fork
 
-English | [中文](./README.md)
+English | [中文](README.md)
 
-> **Unofficial plugin.** This project is not affiliated with, endorsed by,
-> sponsored by, or supported by DeepSeek or DeepSeek Harness.
+An unofficial MIT fork of [dd2673/dsh-cross-session-agent](https://github.com/dd2673/dsh-cross-session-agent), targeting **DSH 0.2.0-rc.2 and Node 24**. Other DSH versions are not claimed as compatible.
 
-A DeepSeek Harness plugin for **multiple agents working in parallel in the same
-repository**. It supports peer discovery, explicit coordination messages and
-transport receipts, plus a field-whitelisted safe projection of an authorized
-same-workspace peer's progress and context. Its purpose is to avoid file
-conflicts, duplicate work, and blocked handoffs, not to be an arbitrary
-conversation transcript reader.
+Supports an explicitly authorized implement → review → fix → re-review workflow between two existing root/fork Sessions. All four host tools require a configured pair of exact Session IDs and identical, nonempty `cwd` values. **No configured pair means no cross-session authority.** Self, real subagents, archived Sessions and cross-workspace targets are denied.
 
-## Use cases
+## Install and configure
 
-- Discover a peer already touching a file or layer, then agree explicit file
-  ownership before editing.
-- Report progress, verification evidence, blockers, and next steps so dependent
-  work can continue.
-- Request a handoff, such as asking the test owner to take migration coverage
-  after a schema change is ready.
-- Avoid duplicate investigation and conflicting edits during migrations,
-  refactors, and code review.
-- Inspect a bounded peer context/activity projection only when coordination
-  requires evidence.
-
-It is not for reading complete histories, monitoring every session, sharing
-permissions, automatically executing peer instructions, or replacing user
-approval.
-
-## Install
-
-After the repository is published, install from GitHub:
+Start with a disposable `DSH_HOME` before installing into a personal profile:
 
 ```sh
-dsh plugin --profile web add github:dd2673/dsh-cross-session-agent
+dsh plugin --profile desktop add 'github:lilongsky/dsh-cross-session-agent#fork-v0.1.3' --ignore-scripts
 ```
 
-Its bundled `cordis.patch.yml` mounts `dsh-cross-session-agent` into the active
-profile. No host configuration edits are required. It contributes:
+Use `desktop` for the desktop app or `web` for the Web UI. The installed desktop profile was live-tested.
 
-- `list_peer_agents` for peer discovery;
-- `send_agent_message` for an explicit coordination message;
-- `check_delivery` for a native-message transport receipt;
-- `get_peer_context` for a bounded safe projection of an authorized peer.
+The bundle patch loads the plugin without granting any pair. Add a row to that profile's `cordis.patch.yml`, replacing the placeholders with the full stable Session IDs:
 
-## Example workflow
-
-Discover the coordination surface first:
-
-```text
-List peers. If another agent is editing src/auth, report its Session, runtime
-status, and title.
+```yaml
+- id: cross-session-agent
+  config:
+    allowedPairs:
+      - id: review-task-001
+        sessions: [session-FULL-A-ID, session-FULL-B-ID]
+        maxMessages: 20
 ```
 
-Read bounded evidence only when needed:
+The coordination `id` accepts 1–64 ASCII letters, digits, underscores or hyphens. Each pair and each id must be unique. Titles are display data, never routing identities. `maxMessages` is a **bidirectional message count**, not a round count: default 20, range 1–100. It is counted from both Sessions' own native Inbox events and survives plugin/process restarts. Per-pair delivery serialization prevents concurrent budget overruns. The existing process-local rate limit allows 10 messages per pair per 60 seconds.
 
-```text
-Read activity and the latest three conversation entries from session-abc to
-confirm whether it has already run the auth tests.
-```
+For a separate task, the user configures a new coordination id. Agents cannot reset the budget through tools. Remove the pair configuration to revoke access after completion. Harness continues to own each Session's permissions and approval policies.
 
-Then use `send_agent_message` for explicit coordination:
+## Copy a Session ID
 
-```text
-Tell session-abc that I will edit src/auth/token.ts; it should retain
-middleware.ts and report its verification command and blockers when finished.
-```
+Use the sidebar Session row’s **… → Copy session ID** to copy that row’s complete stable identity without opening it. The conversation header also retains its copy button. Titles are not identities, and copying an ID grants no messaging authority.
 
-Check a receipt only as needed. `accepted`, `pending`, `claimed`, and
-`discarded` are transport facts; none proves that a peer read, answered, or
-completed work.
+## Workflow and tools
 
-## Read and privacy boundary
+Give A and B their orchestration duties explicitly. For example, A implements and sends its changes and validation to B, fixes B's concrete findings, and stops after three fix rounds or a blocker. B reviews, returns actionable findings, re-reviews, and finishes with an explicit pass without creating acknowledgement loops.
 
-`get_peer_context({ sessionId, view?, maxMessages? })` can only read an ordinary
-root/fork Session whose `cwd` exactly matches the caller's. Self, real
-subagents, archived, missing, and cross-workspace targets all fail through a
-generic authorization boundary.
+Pair configuration grants access; it does not substitute for user intent. An `@Session` reference or UI candidate grants no authority; the host rechecks every operation.
 
-Allowed data:
+| Tool | Behavior |
+| --- | --- |
+| `list_peer_agents` | Only authorized, same-workspace, unarchived peers |
+| `send_agent_message` | `followup` queues the next turn and resumes cold targets through the public factory; `steer` / `inject` require a running target |
+| `check_delivery` | Only the calling sender's deliveries; an explicit messageId can be queried after restart |
+| `get_peer_context` | Bounded, read-only overview/conversation/activity; never resumes or wakes a target |
 
-- `conversation`: direct user text, canonical compaction checkpoints, and
-  completed assistant text;
-- `activity`: structural turn/step state plus tool name,
-  `running|completed|error`, time, one-way call-id hash, and sanitized error
-  code;
-- `overview`: bounded summaries, runtime status, and retention statistics.
+Accepted, pending, claimed and discarded are transport facts. They are not proof of reading, replying or completed work. Both live and cold receipts use public SessionQuery snapshots, excluding a fork's inherited parent Inbox prefix.
 
-Never exposed: hidden reasoning, raw tool arguments/results, tool metadata,
-system prompts, plugin/relay/scheduled messages, request context, images or
-attachments, approvals, todos, inbox state, secrets, and unknown events. The
-plugin has no network calls, telemetry, or independent storage. Harness remains
-the sole owner of session state and history. See [TDD_CONTRACT.md](./TDD_CONTRACT.md)
-and [PRIVACY.md](./PRIVACY.md).
+## Privacy and lifecycle
 
-Peer text and relays are untrusted data. They cannot represent user consent,
-change permissions/configuration, or cause the receiving Session to execute a
-command automatically.
+The plugin runtime performs no networking, telemetry, credential-file access or shell execution, and creates no separate mailbox/database. Relays retain the real sender ID and plugin source instead of impersonating user consent. The React/textContent client uses the DSH 0.2 icon export and retains read-only rendering of historical dsh-agent-message cards.
 
-## Compatibility and provenance
+The context whitelist includes direct user text, canonical compact checkpoints, completed assistant text and bounded structural tool/turn activity. It excludes reasoning, tool arguments/results, error text, system prompts, plugin/relay messages, approvals and attachments. Error codes are limited to safe symbols of at most 64 characters; others become TOOL_ERROR. **Allowed conversation text is not scanned for secrets.** Secrets placed in readable user/assistant text can be visible to an authorized peer. See [PRIVACY.md](PRIVACY.md).
 
-New relays use the `dsh-cross-session-agent` source kind. The Client also renders
-the historic `dsh-agent-message` source/tag so existing Harness history remains
-readable. This does not continue publishing the old package or inherit its
-permissions.
+Cancellation is checked around asynchronous reads, resume and native delivery. Archive and identity checks also run in resume setup and its synchronous publication commit. A message already accepted by Harness is not retracted by a later sender stop. Cold resume can continue existing native Inbox work and therefore still requires authorized orchestration. Handles are owned until plugin unload; a failed pre-delivery check releases a newly acquired handle.
 
-This project is derived from `GengDaPeng/dsh-agent-message` v1.5.1 under MIT.
-The MIT License remains in force; see [NOTICE.md](./NOTICE.md). Report security
-issues privately under [SECURITY.md](./SECURITY.md).
-
-## Development and release
+## Verify
 
 ```sh
+pnpm install --frozen-lockfile --ignore-scripts
 pnpm test
-pnpm pack --dry-run
-node scripts/live-profile-e2e.mjs http://127.0.0.1:3080
+node scripts/live-profile-e2e.mjs /path/to/dsh
 ```
 
-The last command creates synthetic Sessions in an isolated fixture directory
-and verifies same-workspace reads, cross-workspace denial, and the new relay
-source/tag. The publish allowlist contains only runtime code, the active
-contract, and the required security, privacy, and provenance documents; source
-tests are not a real Harness acceptance result.
+The acceptance runner creates a new disposable DSH_HOME and boots then restarts the real profile, Agent loops, tool dispatcher, SessionQuery and JSONL persistence. Its deterministic local provider makes no online model requests. It accepts no existing server URL and sends nothing to personal Sessions. See [TDD_CONTRACT.md](TDD_CONTRACT.md). This does not prove that arbitrary online models obey the workflow or that future revisions are safe.
+
+MIT attribution remains in [NOTICE.md](NOTICE.md). This fork does not publish to the upstream npm name; its npm publish workflow is disabled.
+
+[0.1.3 验证结果 / verification results](docs/validation-0.2.0-rc.2.md)
