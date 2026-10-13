@@ -20,7 +20,7 @@ isolated acceptance runner: bundled primary runtime Node 24.21.0. Original sourc
 | Main desktop transport evidence | **3 of 3 claimed** | Public SessionQuery over exact UI-copied test IDs and native Inbox events; no extra model turn is inferred |
 | rc.2 relay rendering and sender navigation | Passed | Native desktop notice shows sender title and literal message; keyboard activation of its sender link opens the correct Session through uiWorkspace.openSession |
 | Header Session ID copying | Passed on main desktop | The actual clipboard was pasted into the unsent test composer and matched each new test Session ID |
-| Sidebar Session ID menu | Menu visible; copying passed behavioral regression | Public workspace menu slot is present on main desktop. Regression copies the menu row's full ID independently of the active chat and closes the menu. Final main-desktop clipboard read-back remains pending because computer-use input stopped responding |
+| Sidebar Session ID menu | **Passed on main desktop** | With A kept open, selected Copy session ID on B's sidebar row. The actual clipboard pasted into A's unsent composer matched B's full ID; the menu closed and A remained selected. The draft was cleared without sending. Behavioral regression also verifies row-specific copying |
 | Dependency audit | **0 known advisories** | pnpm audit over 59 lockfile dependencies, including development dependencies |
 | Runtime static review | No hidden network, telemetry, credential-file reads, shell/eval or independent mailbox found | Only the three lib runtime files are packed; acceptance scripts and local profiles are excluded |
 

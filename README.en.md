@@ -11,7 +11,7 @@ Supports an explicitly authorized implement → review → fix → re-review wor
 Start with a disposable `DSH_HOME` before installing into a personal profile:
 
 ```sh
-dsh plugin --profile desktop add 'github:lilongsky/dsh-cross-session-agent#fork-v0.1.3-r1' --ignore-scripts
+dsh plugin --profile desktop add 'github:lilongsky/dsh-cross-session-agent#fork-v0.1.3-r2' --ignore-scripts
 ```
 
 Use `desktop` for the desktop app or `web` for the Web UI. The installed desktop profile was live-tested.

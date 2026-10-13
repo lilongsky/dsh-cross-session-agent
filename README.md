@@ -11,7 +11,7 @@
 在自己的 profile 中安装本 fork，建议先在隔离的 `DSH_HOME` 验证：
 
 ```sh
-dsh plugin --profile desktop add 'github:lilongsky/dsh-cross-session-agent#fork-v0.1.3-r1' --ignore-scripts
+dsh plugin --profile desktop add 'github:lilongsky/dsh-cross-session-agent#fork-v0.1.3-r2' --ignore-scripts
 ```
 
 桌面版使用 `desktop`；Web 界面使用 `web`。本机实测已安装在桌面 profile。
