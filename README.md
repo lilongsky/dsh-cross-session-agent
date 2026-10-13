@@ -11,7 +11,7 @@
 在自己的 profile 中安装本 fork，建议先在隔离的 `DSH_HOME` 验证：
 
 ```sh
-dsh plugin --profile desktop add 'github:lilongsky/dsh-cross-session-agent#fork-v0.1.3' --ignore-scripts
+dsh plugin --profile desktop add 'github:lilongsky/dsh-cross-session-agent#fork-v0.1.3-r1' --ignore-scripts
 ```
 
 桌面版使用 `desktop`；Web 界面使用 `web`。本机实测已安装在桌面 profile。
@@ -72,6 +72,6 @@ node scripts/live-profile-e2e.mjs /path/to/dsh
 
 隔离验收使用真实 DSH profile、Agent、工具派发、SessionQuery 和 JSONL 持久化；模型由无网络的确定性测试提供者替代。脚本不接受现有服务器地址，也不会向个人会话投递。详见 [TDD_CONTRACT.md](TDD_CONTRACT.md)。测试不证明任意在线模型一定遵循协作流程，也不是对未来代码版本的安全保证。
 
-本 fork 保留 MIT License 和 [NOTICE.md](NOTICE.md) 中的上游来源。没有向同名 npm 包发布权限；fork 使用 `fork-v*` 标签提供已测版本，不触发上游按 `v*` 标签运行的 npm 发布工作流。
+本 fork 保留 MIT License 和 [NOTICE.md](NOTICE.md) 中的上游来源。本次仅提供已测 Git 标签，未发布 npm 包，也未创建会触发原发布工作流的 GitHub Release。上游 CI 和发布工作流保持原样。
 
 [0.1.3 验证结果 / verification results](docs/validation-0.2.0-rc.2.md)

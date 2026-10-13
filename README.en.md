@@ -11,7 +11,7 @@ Supports an explicitly authorized implement → review → fix → re-review wor
 Start with a disposable `DSH_HOME` before installing into a personal profile:
 
 ```sh
-dsh plugin --profile desktop add 'github:lilongsky/dsh-cross-session-agent#fork-v0.1.3' --ignore-scripts
+dsh plugin --profile desktop add 'github:lilongsky/dsh-cross-session-agent#fork-v0.1.3-r1' --ignore-scripts
 ```
 
 Use `desktop` for the desktop app or `web` for the Web UI. The installed desktop profile was live-tested.
@@ -68,6 +68,6 @@ node scripts/live-profile-e2e.mjs /path/to/dsh
 
 The acceptance runner creates a new disposable DSH_HOME and boots then restarts the real profile, Agent loops, tool dispatcher, SessionQuery and JSONL persistence. Its deterministic local provider makes no online model requests. It accepts no existing server URL and sends nothing to personal Sessions. See [TDD_CONTRACT.md](TDD_CONTRACT.md). This does not prove that arbitrary online models obey the workflow or that future revisions are safe.
 
-MIT attribution remains in [NOTICE.md](NOTICE.md). This fork does not publish to the upstream npm name; its npm publish workflow is disabled.
+MIT attribution remains in [NOTICE.md](NOTICE.md). This build is provided as a tested Git tag only. No npm package or GitHub Release was published. The upstream CI and Release-triggered publishing workflows are retained unchanged.
 
 [0.1.3 验证结果 / verification results](docs/validation-0.2.0-rc.2.md)
