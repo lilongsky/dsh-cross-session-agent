@@ -11,7 +11,7 @@
 在自己的 profile 中安装本 fork，建议先在隔离的 `DSH_HOME` 验证：
 
 ```sh
-dsh plugin --profile desktop add 'github:lilongsky/dsh-cross-session-agent#fork-v0.1.3-r2' --ignore-scripts
+dsh plugin --profile desktop add 'github:lilongsky/dsh-cross-session-agent#fork-v0.1.4' --ignore-scripts
 ```
 
 桌面版使用 `desktop`；Web 界面使用 `web`。本机实测已安装在桌面 profile。
@@ -42,7 +42,15 @@ dsh plugin --profile desktop add 'github:lilongsky/dsh-cross-session-agent#fork-
 - A：“完成任务后把改动和验证结果发给 B；收到 B 的审查意见后整改并再次交给 B。最多整改 3 轮，超限或阻塞时停止并报告。”
 - B：“审查 A 的结果。有问题时把具体意见发回 A；复审通过后报告通过并结束，不发送仅表示‘收到’的消息。”
 
-配置配对仅授予工具访问能力，不能代替任务指令中的用户意图。`@会话` 和客户端候选列表只是目标引用；Host 会再次检查授权，未配对的引用不会获得通信权限。
+使用 **DSH 官方 `@` 菜单中的会话引用** 提供初始上下文。本插件不注册 `@` 候选、不接管输入，也不修改原生引用的显示或导航。官方引用提供带稳定 Session ID 的只读文本快照；它不会投递消息、唤醒目标或随整改自动更新。
+
+例如，在 B 中从原生菜单选择 A，再要求：“审查 @A 的成果；有问题时调用 `send_agent_message` 发给 A，要求它整改并通过同一工具回传。收到回传后重新读取最新文件，必要时调用 `get_peer_context`，继续复审；验收通过后结束。最多整改 3 轮，预算耗尽或阻塞时报告并停止。”工具的 `to` 使用引用快照中的完整 Session ID；有歧义时用 `list_peer_agents` 确认。协作 id 来自配对配置，不是模型可传入或更改的工具参数。
+
+配置配对仅授予工具访问能力，不能代替任务指令中的用户意图。官方 `@` 也不会授予通信权限；Host 会再次检查授权，未配对的引用不能发送消息。
+
+`@` 和完整 Session ID 是两种目标表达方式，不是发送开关。“参考 @A，我们打算作出变化……”只提供上下文，在当前会话讨论；“审查 @A，把问题发给 A，并要求整改后回传”才明确要求通信。同样的区别适用于直接写 Session ID 的请求。插件不会监听引用并自动转发，消息由模型在明确任务职责下调用工具投递。
+
+直接写 Session ID 时，可用 `get_peer_context` 读取该授权 peer 的初始成果，再按请求决定是否发送；不要求先插入一个 `@` 引用。
 
 | 工具 | 行为 |
 | --- | --- |
@@ -74,4 +82,4 @@ node scripts/live-profile-e2e.mjs /path/to/dsh
 
 本 fork 保留 MIT License 和 [NOTICE.md](NOTICE.md) 中的上游来源。本次仅提供已测 Git 标签，未发布 npm 包，也未创建会触发原发布工作流的 GitHub Release。上游 CI 和发布工作流保持原样。
 
-[0.1.3 验证结果 / verification results](docs/validation-0.2.0-rc.2.md)
+[0.1.4 验证结果 / verification results](docs/validation-0.2.0-rc.2.md)

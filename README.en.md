@@ -11,7 +11,7 @@ Supports an explicitly authorized implement → review → fix → re-review wor
 Start with a disposable `DSH_HOME` before installing into a personal profile:
 
 ```sh
-dsh plugin --profile desktop add 'github:lilongsky/dsh-cross-session-agent#fork-v0.1.3-r2' --ignore-scripts
+dsh plugin --profile desktop add 'github:lilongsky/dsh-cross-session-agent#fork-v0.1.4' --ignore-scripts
 ```
 
 Use `desktop` for the desktop app or `web` for the Web UI. The installed desktop profile was live-tested.
@@ -39,7 +39,15 @@ Use the sidebar Session row’s **… → Copy session ID** to copy that row’s
 
 Give A and B their orchestration duties explicitly. For example, A implements and sends its changes and validation to B, fixes B's concrete findings, and stops after three fix rounds or a blocker. B reviews, returns actionable findings, re-reviews, and finishes with an explicit pass without creating acknowledgement loops.
 
-Pair configuration grants access; it does not substitute for user intent. An `@Session` reference or UI candidate grants no authority; the host rechecks every operation.
+Use the **official DSH `@` Session reference** for initial context. This plugin registers no `@` candidates, intercepts no composer input, and leaves native reference rendering and navigation to DSH. A native reference supplies a read-only text snapshot with a stable Session ID; it does not deliver messages, wake the target, or refresh after fixes.
+
+For example, select A from the native menu in B, then ask B to review A's work, call `send_agent_message` with concrete findings and a request for fixes and a reply, and re-read current files or call `get_peer_context` after that reply. Finish on acceptance, or stop and report after three fix rounds, budget exhaustion or a blocker. Use the full Session ID from the reference snapshot as `to`; use `list_peer_agents` if identity is unclear. The coordination id comes from pair configuration, not a model-supplied tool parameter.
+
+Pair configuration grants access; it does not substitute for user intent. A native `@Session` reference grants no messaging authority; the host rechecks every operation.
+
+Native `@` and a full Session ID are both ways to identify a target, not send triggers. "Refer to A while we discuss a change" stays in the current chat; "Review A and send findings back, requesting fixes and a reply" explicitly requests communication. The same distinction applies to requests written with Session IDs. The plugin does not watch references and automatically forward them; the model calls the tool under explicit task duties.
+
+For a plain Session ID, `get_peer_context` can read that authorized peer's initial results before the model decides whether the request calls for a message. Inserting an `@` reference first is not required.
 
 | Tool | Behavior |
 | --- | --- |
@@ -70,4 +78,4 @@ The acceptance runner creates a new disposable DSH_HOME and boots then restarts 
 
 MIT attribution remains in [NOTICE.md](NOTICE.md). This build is provided as a tested Git tag only. No npm package or GitHub Release was published. The upstream CI and Release-triggered publishing workflows are retained unchanged.
 
-[0.1.3 验证结果 / verification results](docs/validation-0.2.0-rc.2.md)
+[0.1.4 验证结果 / verification results](docs/validation-0.2.0-rc.2.md)

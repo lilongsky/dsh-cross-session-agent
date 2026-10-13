@@ -7,7 +7,7 @@ import { writeFile } from 'node:fs/promises'
 import { LlmAdapter, createUserMessage } from '@deepseek-ai/dsh-llm'
 
 export const name = 'cross-session-agent-host-fixture'
-export const inject = ['llm', 'agents', 'tools', 'sessionQuery', 'sessionPersistence', 'workspaceRegistry']
+export const inject = ['llm', 'agents', 'tools', 'sessionQuery', 'sessionPersistence', 'workspaceRegistry', 'sessionReferenceResolver']
 
 export function apply(ctx, config) {
   const { a, b, c, d, fork, cwd, otherCwd, runId, output, phase = 'initial' } = config
@@ -19,7 +19,7 @@ export function apply(ctx, config) {
     async *stream(options) {
       modelCalls++
       options.signal?.throwIfAborted()
-      const last = options.messages.findLast((message) => message.role !== 'system' && message.role !== 'developer' && message.source?.kind !== 'runtime-context')
+      const last = options.messages.findLast((message) => message.role !== 'system' && message.role !== 'developer' && message.source?.kind !== 'runtime-context' && message.source?.kind !== 'session-reference')
       const body = last?.content?.filter((block) => block.type === 'text').map((block) => block.text).join('\n') ?? ''
       modelInputs.push({ role: last?.role, tail: body.slice(-60), roles: options.messages.map((message) => message.role) })
       let action
@@ -70,6 +70,10 @@ export function apply(ctx, config) {
         }
         const ha = await create(a)
         const hb = await create(b)
+        hb.agent.followup(createUserMessage({ content: [{ type: 'text', text: 'FIXTURE_B_READY' }], source: { kind: 'user' } }))
+        const readyDeadline = Date.now() + 10_000
+        while (hb.agent.status !== 'idle' && Date.now() < readyDeadline) await new Promise((resolve) => setTimeout(resolve, 25))
+        assert.equal(hb.agent.status, 'idle')
         await create(c, otherCwd)
         await create(d)
         await hb.dispose()
@@ -78,7 +82,8 @@ export function apply(ctx, config) {
         await read(b)
         check('B existed only in native persistence before the first A to B send')
 
-        ha.agent.followup(createUserMessage({ content: [{ type: 'text', text: 'FIXTURE_START' }], source: { kind: 'user' } }))
+        const mention = '@[Fixture B](dsh-session:' + Buffer.from(JSON.stringify(b), 'utf8').toString('base64url') + ')'
+        ha.agent.followup(createUserMessage({ content: [{ type: 'text', text: mention + '\nFIXTURE_START' }], source: { kind: 'user' } }))
         const deadline = Date.now() + 30_000
         let bSnapshot
         while (Date.now() < deadline) {
@@ -89,6 +94,11 @@ export function apply(ctx, config) {
         }
         assert.ok(bSnapshot.events.some((event) => event.type === 'assistant/message' && event.data.message.content.some((block) => block.type === 'text' && block.text === 'FIXTURE_APPROVED')), 'review/fix/re-review did not reach its terminal answer')
         const aSnapshot = await read(a)
+        const reference = aSnapshot.events.find((event) => event.type === 'user/message' && event.data.source?.kind === 'session-reference')
+        assert.ok(reference, 'the official native @ reference must prepare a durable snapshot')
+        assert.equal(reference.data.source.references[0].sessionId, b)
+        assert.match(reference.data.content[0].text, /FIXTURE_B_READY/)
+        check('official @ Session syntax produced a native session-reference snapshot with the exact peer ID and captured text before messaging')
         const delivered = [...aSnapshot.events, ...bSnapshot.events].filter((event) => event.type === 'user/message' && event.data.source?.kind === 'dsh-cross-session-agent')
         assert.equal(delivered.length, 3)
         assert.deepEqual(delivered.map((event) => event.data.source.senderSessionId).sort(), [a, a, b].sort())

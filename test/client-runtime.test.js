@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
-test('会话状态变化只刷新已识别的会话链接，不重新扫描整个页面', async () => {
+test('保留消息导航与 ID 复制，原生 @ 引用及输入服务不被插件接管', async () => {
   const original = {
     document: globalThis.document,
     Element: globalThis.Element,
@@ -79,7 +79,6 @@ test('会话状态变化只刷新已识别的会话链接，不重新扫描整�
   }
   let loaded
   const sessionSubscribers = []
-  const workspaceSubscribers = []
   const cleanups = []
 
   try {
@@ -108,34 +107,25 @@ test('会话状态变化只刷新已识别的会话链接，不重新扫描整�
       if (id === 'react-dom/client') return { createRoot: () => ({ render(tree) { rendered.push(tree) }, unmount() {} }) }
       if (id === '@deepseek-ai/dsh-client-ui-primitives') {
         // Exactly the names supplied by the installed rc.2 primitives module.
-        return { IconQueueOutlineRegular(props) { iconRenders++; assert.equal(props.size, 14); return { type: 'svg' } }, StateDot() {}, IconCopyOutlineRegular() { return { type: 'svg' } }, MenuItemButton(props) { return { type: 'menu-item', props } } }
+        return { IconQueueOutlineRegular(props) { iconRenders++; assert.equal(props.size, 14); return { type: 'svg' } }, IconCopyOutlineRegular() { return { type: 'svg' } }, MenuItemButton(props) { return { type: 'menu-item', props } } }
       }
       throw new Error('unexpected client dependency: ' + id)
     })
     assert.equal(client.name, 'dsh-cross-session-agent-client')
-    const workspaces = {
-      list: {
-        getSnapshot: () => ({ archivedSessionIds: [] }),
-        subscribe: (callback) => { workspaceSubscribers.push(callback); return () => {} },
-      },
-    }
     const ctx = {
       sessions: {
         list: {
           getSnapshot: () => ({ ids: ['session-peer'], byId: { 'session-peer': { id: 'session-peer', displayTitle: 'Peer', blank: false } } }),
           subscribe: (callback) => { sessionSubscribers.push(callback); return () => {} },
         },
-        binding: () => undefined,
+        binding() { assert.fail('the client must not submit or intercept composer input') },
       },
       uiWorkspace: { openSession(id) { opened.push(id) } },
       slots: {
         inject(_name, register) { register() },
         register(definition, renderer) { slots.set(definition.name, renderer); return () => {} },
       },
-      get(name) {
-        if (name === 'workspaces') return workspaces
-        if (name === 'inputTriggers') return { registerSource: () => () => {} }
-      },
+      get(name) { assert.fail('unexpected service lookup: ' + name) },
       effect(factory) {
         const cleanup = factory()
         if (typeof cleanup === 'function') cleanups.push(cleanup)
@@ -144,8 +134,10 @@ test('会话状态变化只刷新已识别的会话链接，不重新扫描整�
     }
 
     client.apply(ctx)
-    assert.ok(iconRenders > 0, 'a real reference render must exercise the rc.2 icon import')
-    assert.match(JSON.stringify(rendered), /@Peer/)
+    assert.ok(iconRenders > 0, 'a real relay sender render must exercise the rc.2 icon import')
+    assert.equal(reference.textContent, '@session-peer')
+    assert.deepEqual(reference.children, [])
+    assert.equal(reference.attributes.size, 0, 'ordinary references retain their native DOM and behavior')
     assert.equal(triggerText.textContent, 'MAIN_FIX_1 <literal>')
     const sender = trigger.querySelector('[data-context-relay-sender]')
     assert.equal(sender.dataset.agentMsgSessionId, 'session-peer')
@@ -164,7 +156,6 @@ test('会话状态变化只刷新已识别的会话链接，不重新扫描整�
     assert.equal(menuOpen, false)
     queries.length = 0
     sessionSubscribers[0]()
-    workspaceSubscribers[0]()
 
     assert.deepEqual(queries.filter(({ root }) => root === body), [])
   } finally {

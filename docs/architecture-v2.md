@@ -2,7 +2,7 @@
 
 > Status: active product and implementation contract
 >
-> Version: 0.1.3, 2026-10-13 (lilongsky fork)
+> Version: 0.1.4, 2026-10-13 (lilongsky fork)
 >
 > **Unofficial.** Not affiliated with, endorsed by, or supported by DeepSeek or
 > DeepSeek Harness.
@@ -91,6 +91,20 @@ as the primary relay protocol and accepts historical `dsh-agent-message`
 source/tag data only to display existing session history. Client DOM decoration
 is presentation-only; it cannot influence identity, authorization, routing, or
 delivery.
+
+The official DSH `@` source owns Session selection, canonical reference syntax,
+composer submission, snapshot capture, reference rendering and navigation. This
+plugin registers no input source and decorates no Session references. A native
+reference grants no messaging authority. `send_agent_message.to` takes the full
+stable ID from the captured reference or authorized peer discovery, never its
+display title or encoded link. Re-review reads current workspace artifacts or
+requests a new bounded peer context instead of treating the initial snapshot as
+a live subscription.
+
+Both a native mention and a plain ID can identify a peer. Reference-only
+discussion stays in the requesting Session; an explicit send request or
+user-granted orchestration duty calls the message tool. There is no automatic
+reference listener or keyword-based forwarding path.
 
 On rc.2, the Client decorates only recognized protocol bodies in native
 `data-turn-trigger` notices and legacy relay rows. Sender navigation uses the

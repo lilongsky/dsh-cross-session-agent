@@ -108,7 +108,7 @@ test('默认 followup 允许 idle 会话并进入独立下一 turn', async () =>
   const send = tools.get('send_agent_message')
 
   assert.match(send.description, /当前请求或用户已授予的编排职责/)
-  assert.match(send.description, /@session.*只提供目标.*不代表发送/)
+  assert.match(send.description, /官方 @会话.*只读上下文快照.*不会发送消息.*不会授予通信权限/)
   assert.doesNotMatch(send.description, /读取、搜索、分析、比较|意图不明确时先询问/)
   assert.match(send.description, /正文明确要求.*发送方.*才.*回复/)
   assert.match(send.description, /不要.*transport ack.*“收到”/)

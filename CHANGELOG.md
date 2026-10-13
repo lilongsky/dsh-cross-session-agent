@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.4 — 2026-10-13
+
+- Reuse the official DSH `@` Session references. Remove the duplicate candidate source, claimed-input submission, candidate decoration, reference decoration and input-trigger dependency.
+- Keep the four cross-session tools, relay rendering, sender navigation and both Session ID copy actions. Clarify stable target IDs, snapshot freshness and explicit messaging in the tool description and bilingual workflow instructions.
+- Validate reference-only and explicit-send requests through both native `@` and plain Session IDs on the main desktop, including a real-file review/fix/re-review loop. The native profile fixture also verifies official snapshot preparation.
+
 ## 0.1.3 — 2026-10-13
 
 - Add Copy session ID to the sidebar Session … menu through the public workspace menu slot; copy the target row’s stable ID without opening it. Keep the header copy button.
